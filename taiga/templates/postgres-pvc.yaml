@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    taiga.service: postgres-taiga
+  name: postgres-{{ .Chart.Name }}
+spec:
+  accessModes:
+  - {{ .Values.postgres.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.postgres.capacity | quote }}
+status: {}

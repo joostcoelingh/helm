@@ -1,0 +1,115 @@
+# Default values for taiga.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+taiga:
+  replicaCount: 1
+  hosts: taiga.example.com
+  image:
+    repository:  jcoelingh/docker-taiga
+    tag: latest
+    pullPolicy: Always
+    #pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    annotations:
+      ingress.kubernetes.io/ssl-redirect: "true"
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    path: /
+    hosts:
+      - taiga.example.com
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #  cpu: 100m
+    #  memory: 128Mi
+    # requests:
+    #  cpu: 100m
+    #  memory: 128Mi
+
+  # PVC:
+  media:
+    capacity: 1Gi
+    accessMode: ReadWriteOnce
+
+  config:
+    capacity: 1Gi
+    accessMode: ReadWriteOnce
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+postgres:
+  replicaCount: 1
+
+  # Database settings:
+  database:
+    databaseName: taigadb
+    databasePassword: changeme
+    databaseUser: taiga
+
+  image:
+    repository: postgres
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 5432
+
+  #PVC:
+  capacity: 1Gi
+  accessMode: ReadWriteOnce
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+rabbitmq:
+  password: changeme
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 5672
+
+  image:
+    repository: rabbitmq
+    tag: 3
+    pullPolicy: IfNotPresent
+
+events:
+  replicaCount: 1
+
+  image:
+    repository: benhutchins/taiga-events
+    tag: latest
+    pullPolicy: IfNotPresent
+
+redis:
+  replicaCount: 1
+
+  image:
+    repository: redis
+    tag: 3
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 6379

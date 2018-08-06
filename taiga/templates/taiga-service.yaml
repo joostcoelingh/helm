@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "taiga.fullname" . }}
+  labels:
+    app: {{ template "taiga.name" . }}
+    chart: {{ template "taiga.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    taiga.service: taiga
+  annotations:
+    app: taiga
+spec:
+  type: {{ .Values.taiga.service.type }}
+  ports:
+    - port: {{ .Values.taiga.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ template "taiga.name" . }}
+    release: {{ .Release.Name }}
+    taiga.service: taiga

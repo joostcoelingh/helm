@@ -1,0 +1,101 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "taiga.fullname" . }}
+  labels:
+    app: {{ template "taiga.name" . }}
+    chart: {{ template "taiga.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.taiga.replicaCount }}
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ template "taiga.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "taiga.name" . }}
+        release: {{ .Release.Name }}
+        taiga.service: taiga
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.taiga.image.repository }}:{{ .Values.taiga.image.tag }}"
+          imagePullPolicy: {{ .Values.taiga.image.pullPolicy }}
+          env:
+            - name: TAIGA_DB_HOST
+              value: postgres
+            - name: TAIGA_DB_NAME
+              value: {{ .Values.postgres.database.databaseName }}
+            - name: TAIGA_DB_PASSWORD
+              value: {{ .Values.postgres.database.databasePassword }}
+            - name: TAIGA_DB_USER
+              value: {{ .Values.postgres.database.databaseUser }}
+            - name: TAIGA_HOSTNAME
+              value: {{ .Values.taiga.hosts }}
+            - name: TAIGA_SSL_BY_REVERSE_PROXY
+              value: "True"
+            # - name: RABBIT_PORT_5672_TCP_ADDR
+            #   value: rabbit
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          volumeMounts:
+          - name: local
+            mountPath: /taiga/local.py
+            subPath: local.py
+            readOnly: false
+          - name: config
+            mountPath: /taiga/conf.json
+            subPath: conf.json
+            readOnly: false
+          - name: celery
+            mountPath: /usr/src/taiga-back/settings/celery.py
+            subPath: celery.py
+            readOnly: false
+          - mountPath: /usr/src/taiga-back/media
+            name: taiga-media
+          resources:
+{{ toYaml .Values.taiga.resources | indent 12 }}
+    {{- with .Values.taiga.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.taiga.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.taiga.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+      - name: taiga-media
+        persistentVolumeClaim:
+          claimName: {{ .Chart.Name }}-media
+      - name: config
+        configMap:
+          name: taigaconfig
+          defaultMode: 0555
+      - name: local
+        configMap:
+          name: taigalocal
+          defaultMode: 0555
+      - name: celery
+        configMap:
+          name: celeryconfig
+          defaultMode: 0555

@@ -1,0 +1,56 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: events
+  labels:
+    app: {{ template "taiga.name" . }}
+    chart: {{ template "taiga.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.taiga.replicaCount }}
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ template "taiga.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "taiga.name" . }}
+        release: {{ .Release.Name }}
+        taiga.service: events
+    spec:
+      containers:
+        - name: events
+          image: "{{ .Values.events.image.repository }}:{{ .Values.events.image.tag }}"
+          imagePullPolicy: {{ .Values.events.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+          - name: config
+            mountPath: /usr/src/taiga-events/config.json
+            subPath: config.json
+          resources:
+{{ toYaml .Values.events.resources | indent 12 }}
+    {{- with .Values.events.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.events.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.events.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: eventsconfig
+          defaultMode: 0555
